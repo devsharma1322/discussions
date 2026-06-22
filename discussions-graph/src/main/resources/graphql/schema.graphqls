@@ -1,0 +1,134 @@
+# GraphQL SDL for AnonCircles BFF.
+#
+# Notes on the `circles` query:
+#   - scope=ALL       => every circle
+#   - scope=MINE      => circles the viewer created (admin) OR joined
+#   - scope=DISCOVER  => circles the viewer has NOT joined
+#
+# Search override: when `search` is non-empty:
+#   - MINE search stays scoped to the user's circles (topic OR description)
+#   - DISCOVER search WIDENS to all circles (topic OR description)
+#   - ALL search is unchanged (matches everywhere)
+#
+# Pagination: page size is capped at 10 server-side. Larger requested limits
+# are clamped silently.
+
+scalar UUID
+scalar DateTime
+
+type Query {
+    me: User
+    circles(
+        scope: CircleScope! = ALL
+        sort: CircleSort! = POPULAR
+        search: String
+        page: Int = 1
+        limit: Int = 10
+    ): CirclePage!
+    circle(id: UUID!): Circle
+    thread(id: UUID!): Thread
+    threads(circleId: UUID!, page: Int = 1, limit: Int = 10): ThreadPage!
+    messages(threadId: UUID!, page: Int = 1, limit: Int = 10): MessagePage!
+}
+
+type Mutation {
+    # ---- Session ----
+    "Creates a fresh anonymous session. The returned JWT is what the client stores as engage-auth."
+    startSession: AuthResult!
+    "Best-effort server signal that a client has dropped its session. The client also wipes local storage."
+    logout: GenericResult!
+
+    # ---- Circles ----
+    createCircle(topic: String!, description: String!): Circle!
+    updateCircleDescription(id: UUID!, description: String!): Circle!
+    deleteCircle(id: UUID!): GenericResult!
+    joinCircle(id: UUID!): Circle!
+    leaveCircle(id: UUID!): Circle!
+
+    # ---- Threads & messages ----
+    createThread(circleId: UUID!, title: String!): Thread!
+    postMessage(threadId: UUID!, body: String!): Message!
+
+    # ---- GenAI ----
+    """
+    Non-streaming convenience: returns the full text once generation completes.
+    Rate-limited 10/hr per user. Prefer the `generateDescriptionStream` subscription
+    in the UI to render tokens as they arrive.
+    """
+    generateDescription(
+        topic: String!
+        description: String
+        mode: GenerateMode!
+    ): GenerateDescriptionResult!
+}
+
+type Subscription {
+    """
+    Streams the description token-by-token while Gemini generates it. Each event is
+    a chunk to append to whatever the UI has rendered so far. Stream completes when
+    generation finishes; an error event delivers the same UNAVAILABLE signal the
+    mutation surfaces via the `DescriptionUnavailable` union branch.
+
+    Rate-limited 10/hr per user, identical bucket to `generateDescription`.
+    Requires Authorization: Bearer <engage-auth> on the WS subprotocol's
+    `connection_init` payload.
+    """
+    generateDescriptionStream(
+        topic: String!
+        description: String
+        mode: GenerateMode!
+    ): String!
+}
+
+enum CircleScope { ALL MINE DISCOVER }
+enum CircleSort  { POPULAR NEWEST }
+enum GenerateMode { FROM_TOPIC FROM_TOPIC_AND_DESCRIPTION }
+
+type User {
+    id: UUID!
+    displayName: String!
+    createdAt: DateTime!
+}
+
+type AuthResult {
+    engageAuth: String!
+    user: User!
+}
+
+type Circle {
+    id: UUID!
+    topic: String!
+    description: String!
+    memberCount: Int!
+    adminUserId: UUID!
+    isAdmin: Boolean!
+    isMember: Boolean!
+    createdAt: DateTime!
+}
+
+type Thread {
+    id: UUID!
+    circleId: UUID!
+    title: String!
+    createdBy: String!
+    createdAt: DateTime!
+}
+
+type Message {
+    id: UUID!
+    threadId: UUID!
+    body: String!
+    author: String!
+    createdAt: DateTime!
+}
+
+type CirclePage  { data: [Circle!]!  total: Int!  page: Int!  limit: Int! }
+type ThreadPage  { data: [Thread!]!  total: Int!  page: Int!  limit: Int! }
+type MessagePage { data: [Message!]! total: Int!  page: Int!  limit: Int! }
+
+type GenericResult { success: Boolean! }
+
+union GenerateDescriptionResult = DescriptionGenerated | DescriptionUnavailable
+
+type DescriptionGenerated   { text: String! }
+type DescriptionUnavailable { message: String! }

@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: discussions-graph
+  profiles:
+    active: dev
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  graphql:
+    schema:
+      printer:
+        enabled: true
+      introspection:
+        enabled: true       # disabled in prod profile (see application-prod.yml)
+    graphiql:
+      enabled: true
+    websocket:
+      path: /graphql
+      # The WebFlux GraphQL WS endpoint shares the /graphql path; HTTP POST and
+      # WebSocket Upgrade are demuxed by the framework. Auth for the WS upgrade
+      # is handled in WebSocketAuthInterceptor.
+
+server:
+  port: ${PORT:4003}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+graph:
+  discussions-service-url: ${DISCUSSIONS_SERVICE_URL:http://localhost:4001}
+  genai-service-url: ${GENAI_SERVICE_URL:http://localhost:4002}
+  internal-auth-token: ${INTERNAL_SERVICE_TOKEN:dev-only-internal-token-replace-me}
+  ui-origin: ${UI_ORIGIN:http://localhost:5173}
+  query:
+    depth-limit:
+      enabled: ${GRAPH_QUERY_DEPTH_LIMIT_ENABLED:false}
+      max: 7
+    complexity-limit:
+      enabled: ${GRAPH_QUERY_COMPLEXITY_LIMIT_ENABLED:false}
+      max: 200

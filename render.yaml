@@ -1,0 +1,58 @@
+# Render Blueprint — single Web Service running the multistage Dockerfile.
+#
+# Usage: in the Render dashboard, click "New +" → "Blueprint" → paste this
+# repo's URL. Render reads this file and provisions the Web Service. You then
+# fill in the Environment Group placeholders (marked `sync: false`) with
+# real secrets in the dashboard.
+#
+# Free tier notes:
+#   - Plan "free" sleeps after 15 min idle. Cold restart ≈ 35s.
+#     The discussions-ui WakingSplash component covers this UX.
+#   - Free Postgres add-ons are gone — point at Neon instead (see DEPLOY.md).
+
+services:
+  - type: web
+    name: anoncircles-graph
+    runtime: image
+    plan: free
+    region: oregon
+    # GHCR image pushed by .github/workflows/build-and-push.yml on main.
+    # Update <OWNER> to your GitHub login or org.
+    image:
+      url: ghcr.io/<OWNER>/discussions:latest
+    healthCheckPath: /actuator/health
+    autoDeploy: true
+    envVars:
+      # ---- Spring profile + shared JVM flags ----
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+
+      # ---- Cross-host URLs ----
+      - key: UI_ORIGIN
+        sync: false   # paste your Vercel URL, e.g. https://anoncircles.vercel.app
+      - key: APP_BASE_URL
+        sync: false   # same as UI_ORIGIN — service uses this for absolute links
+      - key: APP_CORS_ALLOWED_ORIGIN
+        sync: false   # same as UI_ORIGIN
+
+      # ---- Database (Neon) ----
+      - key: SPRING_DATASOURCE_URL
+        sync: false   # jdbc:postgresql://ep-xxx-pooler.region.aws.neon.tech/anoncircles?sslmode=require
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+
+      # ---- Secrets (generate with `openssl rand -base64 32`) ----
+      - key: ENGAGE_AUTH_SECRET
+        generateValue: true   # Render generates and persists a strong value
+      - key: INTERNAL_SERVICE_TOKEN
+        generateValue: true   # graph and genai share this — both read the same env var
+      - key: ENGAGE_AUTH_EXPIRATION
+        value: 7d
+
+      # ---- Gemini (REQUIRED — service refuses to start without it) ----
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash

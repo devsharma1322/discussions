@@ -1,0 +1,11 @@
+genai:
+  gemini:
+    api-key: "test-dummy-key-not-real"
+    model: gemini-3.5-flash
+  internal-auth:
+    token: test-internal-token
+
+logging:
+  level:
+    org.springframework: WARN
+    com.anoncircles: INFO

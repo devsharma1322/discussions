@@ -1,0 +1,20 @@
+spring:
+  graphql:
+    schema:
+      introspection:
+        enabled: true
+    graphiql:
+      enabled: false
+
+graph:
+  discussions-service-url: http://localhost:0
+  genai-service-url: http://localhost:0
+  internal-auth-token: test-internal-token
+  ui-origin: http://localhost:5173
+  query:
+    max-depth: 7
+
+logging:
+  level:
+    org.springframework: WARN
+    com.anoncircles: INFO

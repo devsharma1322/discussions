@@ -1,0 +1,55 @@
+# Production overrides for discussions-service.
+#
+# Spring picks this up when SPRING_PROFILES_ACTIVE=prod.
+#
+# Strategy:
+#   - Secrets and connection strings carry NO defaults — Spring fails fast at
+#     startup if any required env var is missing. Better than booting with a
+#     dev-default secret and silently issuing forgeable tokens.
+#   - Hikari is sized for Neon's free-tier pooler (max 100 concurrent
+#     connections shared across the whole project, so we stay polite).
+#   - server.port is inherited from base application.yml which honors $PORT
+#     (Render injects it).
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      pool-name: anoncircles-pool
+      # Neon free tier compute can sleep — keep a small pool with short idle
+      # timeouts so we don't keep dead connections after the DB scales down.
+      maximum-pool-size: 5
+      minimum-idle: 1
+      idle-timeout: 30000
+      connection-timeout: 10000
+      max-lifetime: 600000
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+app:
+  base-url: ${APP_BASE_URL}
+  cors:
+    # The Vercel deployment origin, e.g. https://anoncircles.vercel.app.
+    # Set in Render's environment, not committed.
+    allowed-origin: ${APP_CORS_ALLOWED_ORIGIN}
+
+engage:
+  auth:
+    secret: ${ENGAGE_AUTH_SECRET}
+    expiration: ${ENGAGE_AUTH_EXPIRATION:7d}
+
+logging:
+  level:
+    root: INFO
+    com.anoncircles: INFO
+    # Log SQL slower than 500ms so we can spot Neon cold-resume latency.
+    org.hibernate.SQL_SLOW: WARN
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never

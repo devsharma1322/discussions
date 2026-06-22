@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: genai-service
+  profiles:
+    active: dev
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+server:
+  port: ${PORT:4002}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+genai:
+  gemini:
+    api-key: ${GEMINI_API_KEY:}
+    model: gemini-3.5-flash
+  internal-auth:
+    token: ${INTERNAL_SERVICE_TOKEN:dev-only-internal-token-replace-me}

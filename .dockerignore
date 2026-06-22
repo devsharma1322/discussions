@@ -1,0 +1,21 @@
+# Things the Docker build must not see.
+# Keeps the build context small (<5 MB) and avoids leaking dev secrets.
+
+**/target/
+**/node_modules/
+**/dist/
+**/.idea/
+**/.vscode/
+**/.DS_Store
+**/.env
+**/.env.*
+!**/.env.example
+**/.git/
+**/.gitignore
+**/*.log
+Spike/
+.github/modernize/
+.copilot/
+DEPLOY.md
+README.md
+**/README.md

@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: discussions-service
+  profiles:
+    active: dev
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/anoncircles}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    hikari:
+      pool-name: anoncircles-pool
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
+      connection-timeout: 5000
+      max-lifetime: 1800000
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+server:
+  port: ${PORT:4001}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+app:
+  base-url: ${APP_BASE_URL:http://localhost:5173}
+  cors:
+    allowed-origin: ${APP_CORS_ALLOWED_ORIGIN:http://localhost:5173}
+
+engage:
+  auth:
+    secret: ${ENGAGE_AUTH_SECRET:dev-only-secret-please-change-me-32bytes-min!!}
+    expiration: ${ENGAGE_AUTH_EXPIRATION:7d}

@@ -1,0 +1,30 @@
+# Production overrides for genai-service.
+#
+# Spring picks this up when SPRING_PROFILES_ACTIVE=prod.
+#
+# Strategy:
+#   - INTERNAL_SERVICE_TOKEN carries no default; service fails fast if missing.
+#     Must match the value set on discussions-graph or the X-Internal-Auth
+#     handshake fails 401.
+#   - GEMINI_API_KEY is REQUIRED — there is no mock provider fallback any more,
+#     so the service refuses to start without a real key. Set it in Render's
+#     environment from a key generated at https://aistudio.google.com/apikey.
+#   - server.port inherited from base application.yml; honors $PORT in prod.
+genai:
+  internal-auth:
+    token: ${INTERNAL_SERVICE_TOKEN}
+  gemini:
+    api-key: ${GEMINI_API_KEY}
+    model: ${GEMINI_MODEL:gemini-3.5-flash}
+
+logging:
+  level:
+    root: INFO
+    com.anoncircles: INFO
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
