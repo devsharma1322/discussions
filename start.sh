@@ -81,8 +81,8 @@ wait_ready() {
   return 1
 }
 
-wait_ready discussions-service "$SERVICE_PORT" 60
-wait_ready genai-service       "$GENAI_PORT"   60
+wait_ready discussions-service "$SERVICE_PORT" 180
+wait_ready genai-service       "$GENAI_PORT"   120
 
 # ---- Start discussions-graph (foreground, public) ----
 log "Starting discussions-graph on :$GRAPH_PORT (foreground)"
