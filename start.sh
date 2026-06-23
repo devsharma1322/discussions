@@ -26,8 +26,7 @@ JAVA_FLAGS="-XX:MaxRAMPercentage=30 \
   -XX:TieredStopAtLevel=1 \
   -Xss256k \
   -XX:MaxMetaspaceSize=96m \
-  -Dspring.jmx.enabled=false \
-  -Dspring.main.lazy-initialization=true"
+  -Dspring.jmx.enabled=false"
 
 SERVICE_PORT=4001
 GENAI_PORT=4002
