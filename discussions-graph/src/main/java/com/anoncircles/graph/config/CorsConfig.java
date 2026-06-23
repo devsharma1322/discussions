@@ -32,22 +32,14 @@ public class CorsConfig {
         return new WebFluxConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                String[] origins = allowed.toArray(new String[0]);
                 registry.addMapping("/graphql/**")
-                        .allowedOrigins(origins)
+                        .allowedOrigins(allowed.toArray(new String[0]))
                         .allowedMethods("GET", "POST", "OPTIONS")
                         .allowedHeaders("Authorization", "Content-Type")
                         .allowCredentials(true)
-                        .maxAge(3600);
-                // The WakingSplash component (and any uptime monitor) polls
-                // /actuator/health from the deployed UI origin, so it needs
-                // the same CORS allowlist as the GraphQL endpoint.
-                registry.addMapping("/actuator/**")
-                        .allowedOrigins(origins)
-                        .allowedMethods("GET")
-                        .allowedHeaders("Content-Type")
                         .maxAge(3600);
             }
         };
     }
 }
+

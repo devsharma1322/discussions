@@ -32,3 +32,14 @@ management:
       probes:
         enabled: true
       show-details: never
+endpoints:
+    web:
+      # Spring Boot actuator endpoints are served by a separate handler chain
+      # that bypasses the standard WebFlux CorsRegistry mappings, so we have
+      # to configure their CORS policy here. Mirrors the allowlist used for
+      # /graphql in CorsConfig.java so the WakingSplash health probe works
+      # from the Vercel-deployed UI.
+      cors:
+        allowed-origins: ${UI_ORIGIN}
+        allowed-methods: GET
+        max-age: 3600s
