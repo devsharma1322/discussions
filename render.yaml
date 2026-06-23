@@ -17,9 +17,9 @@ services:
     plan: free
     region: oregon
     # GHCR image pushed by .github/workflows/build-and-push.yml on main.
-    # Update <OWNER> to your GitHub login or org.
+    # Update devsharma1322 to your GitHub login or org.
     image:
-      url: ghcr.io/<OWNER>/discussions:latest
+      url: ghcr.io/devsharma1322/discussions:latest
     healthCheckPath: /actuator/health
     autoDeploy: true
     envVars:
